@@ -126,22 +126,23 @@ export default function SettingsPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (file.size > 1024 * 1024) {
+      setError('Logo must be under 1MB');
+      return;
+    }
     setUploading(true);
     setError('');
     setMessage('');
     try {
-      const form = new FormData();
-      form.append('logo', file);
-      const token = auth.getToken();
-      const res = await fetch(`${API_URL}/api/settings/logo`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: form,
+      const logo = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('Could not read image'));
+        reader.readAsDataURL(file);
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || 'Upload failed');
-      setFirm((f) => ({ ...f, logoUrl: data.data.logoUrl }));
-      setMessage(data.message || 'Logo updated');
+      const res = await api('/api/settings/logo', { method: 'POST', body: { logo } });
+      setFirm((f) => ({ ...f, logoUrl: res.data.logoUrl }));
+      setMessage(res.message || 'Logo updated');
     } catch (err) {
       setError(err.message);
     } finally {
