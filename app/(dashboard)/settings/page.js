@@ -10,7 +10,7 @@ const emptyCaseType = () => ({ value: '', label: '' });
 
 const assetUrl = (logoUrl) => {
   if (!logoUrl) return '';
-  if (/^https?:\/\//i.test(logoUrl)) return logoUrl;
+  if (/^https?:\/\//i.test(logoUrl) || logoUrl.startsWith('data:')) return logoUrl;
   return `${API_URL}${logoUrl}`;
 };
 
